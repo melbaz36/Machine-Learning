@@ -1,0 +1,108 @@
+import numpy as np, pandas as pd, seaborn as sns, matplotlib.pyplot as plt
+from sklearn.datasets import make_blobs
+from sklearn.datasets import make_moons
+from sklearn.cluster import KMeans
+d = pd.read_csv("Customer data.csv")
+[rows,columns]=np.shape(d)
+new_d=d.iloc[:,1:columns]
+Customer_Data=pd.DataFrame(new_d).to_numpy()
+count=0
+k=5
+
+Centroids_Random=Customer_Data[np.random.choice(rows,k,replace=False)]
+def GUC_Distance ( Centroids_Random, Data_points, Distance_Type ):
+    DistanceEuc=np.zeros([rows,k])
+    Avg_Customers=np.zeros([rows,1])
+    Avg_Centers=np.zeros([k,1])
+    updated_Cust=np.zeros([rows,1])
+    updated_centr=np.zeros([k,1])
+    diff_centr=np.zeros([k,columns-1])
+    diff_Cust=np.zeros([rows,columns-1])
+    num=np.zeros([rows,k])
+    denom=np.zeros([rows,k])
+    if Distance_Type=='Eucledian distance':
+        for i in range(k):    
+            DistanceEuc[:,i] = ((Customer_Data-Centroids_Random[i])**2).sum(axis=1)
+            Cluster_Distance=DistanceEuc
+    else:
+        Avg_Customers=np.average(Customer_Data,axis=1)
+        Avg_Centers=np.average(Centroids_Random,axis=1)
+        for b in range(rows):
+           diff_Cust[b]=Customer_Data[b]-Avg_Customers[b] 
+       
+        for a in range(k):
+           diff_centr[a]=Centroids_Random[a]-Avg_Centers[a]
+        for m in range(rows):
+           updated_Cust[m]=((Customer_Data[m]-Avg_Customers[m])**2).sum()
+        for n in range(k):
+           updated_centr[n]=((Centroids_Random[n]-Avg_Centers[n])**2).sum()
+        for p in range(k):
+           for o in range(rows): 
+               num[o,p]=(diff_Cust[o]* diff_centr[p]).sum()
+               denom[o,p]=np.sqrt(updated_Cust[o]*updated_centr[p])
+        Cluster_Distance=1-(num/denom)
+    return Cluster_Distance
+
+def GUC_Kmean ( Cust_Data,k,Distance_Type ):
+    Centroids_Random=Customer_Data[np.random.choice(rows,k,replace=False)]
+    Cluster_users=np.zeros(k)
+    Clusters_sum=np.zeros([k,columns-1])
+    Centers=np.zeros([k,columns-1])
+    D_F=0
+    D_temp=-1
+    for i in range(100):
+        Centroids_Random=Cust_Data[np.random.choice(rows,k,replace=False)]
+        while True:
+            Distance=GUC_Distance ( Centroids_Random, Cust_Data,'Eucledian distance')
+            Min_index=np.argmin(Distance,axis=1)
+            Min_Dis=np.min(Distance,axis=1)
+            Final_Cluster_Distance=Min_Dis
+            for c in range(k):
+                for j in range(rows):
+                    if Min_index[j]==count:
+                        D_F=D_F+((((Cust_Data[j]-Centroids_Random[c])**2)).sum())
+                        Cluster_users[c]=Cluster_users[c]+1
+                        Clusters_sum[c]=Clusters_sum[count]+Cust_Data[j]
+                Centers[count]=Clusters_sum[c]/Cluster_users[c]
+                D_F=D_F/rows
+            if D_F==D_temp:
+                break
+            else:
+                D_temp=D_F
+            if i==0:
+                min_dis=D_F
+            if D_F<min_dis:
+                min_dis=D_F
+            Centroids_Random=Centers
+            
+            return [Final_Cluster_Distance,min_dis,Min_index]
+        
+wcss_list=[]
+  
+for i in range(1, 11):  
+    kmeans = KMeans(n_clusters=i, init='k-means++', random_state= 42)  
+    kmeans.fit(Customer_Data)  
+    wcss_list.append(kmeans.inertia_)  
+plt.plot(range(1, 11), wcss_list)  
+plt.title('The Elobw Method Graph')  
+plt.xlabel('Number of clusters(k)')  
+plt.ylabel('wcss_list')  
+plt.show()
+
+
+
+            
+   
+   
+   
+(dis,dist,m)=GUC_Kmean(Customer_Data, k, 'Eucledian distance')
+df = pd.DataFrame(dict(x=Customer_Data[:,2], y=Customer_Data[:,4], label=m.astype(int)))
+colors = {0:'blue', 1:'orange', 2:'green',3:'red',4:'olive',5:'yellow',6:'pink'}
+fig, ax = plt.subplots(figsize=(8, 8))
+grouped = df.groupby('label')
+for key, group in grouped:
+    group.plot(ax=ax, kind='scatter', x='x', y='y', label=key, color=colors[key])
+ax.scatter(Centroids_Random[:, 2],Centroids_Random[:, 4], marker='*', s=150, c='#ff2222')
+plt.xlabel('X_1')
+plt.ylabel('X_2')
+plt.show()
