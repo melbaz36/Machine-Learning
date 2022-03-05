@@ -84,8 +84,8 @@ for i in range(1, 11):
     kmeans.fit(Customer_Data)  
     wcss_list.append(kmeans.inertia_)  
 plt.plot(range(1, 11), wcss_list)  
-plt.title('The Elobw Method Graph')  
-plt.xlabel('Number of clusters(k)')  
+plt.title('The Elbow Method')  
+plt.xlabel('Number of clusters')  
 plt.ylabel('wcss_list')  
 plt.show()
 
