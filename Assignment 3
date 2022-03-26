@@ -1,0 +1,54 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Mar 18 13:42:05 2022
+
+@author: Mahmoud
+"""
+
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split
+#from sklearn.model_selection import split
+
+from sklearn.datasets import load_iris
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas  as  pd
+import seaborn as sns 
+import  matplotlib.pyplot as  plt 
+import numpy  as  np #matplotlib inline 
+from sklearn.preprocessing import StandardScaler
+from sklearn import preprocessing
+from sklearn.metrics import confusion_matrix
+
+Data=pd.read_csv('Classified Data')
+scaler = StandardScaler()
+scaler.fit(Data.drop('TARGET CLASS',axis=1)) 
+scaled_features = scaler.transform(Data.drop('TARGET CLASS',axis=1))
+scaled_features = pd.DataFrame(scaled_features,columns=Data.columns[:-1])
+scaled_features.head()
+X = scaled_features 
+y = Data['TARGET CLASS'] 
+X_train, X_test, y_train, y_test = train_test_split(scaled_features,Data['TARGET CLASS'],               
+                                                    test_size=0.4, random_state=101) 
+X_t, X_t_new=np.split(X_test, 2)
+Y_t , Y_t_new=np.split(y_test, 2)
+
+e=[]
+krange=99
+for i in range(1, krange):
+    knn = KNeighborsClassifier(n_neighbors=i)
+    knn.fit(X_train, y_train)
+    pred_new = knn.predict(X_t)
+    e.append(np.mean(pred_new != Y_t))
+
+plt.figure(figsize=(12, 6))
+plt.plot(range(1, krange), e, color='red', linestyle='dashed', marker='o',
+         markerfacecolor='blue', markersize=10)
+knn = KNeighborsClassifier(n_neighbors=krange)
+knn.fit(X_train,y_train)
+predn = knn.predict(X_t_new)
+print (confusion_matrix(Y_t_new, predn))
+print(knn.score(X_t_new, Y_t_new))
+plt.title('Error Rate K Value')
+plt.xlabel('K Value')
+plt.ylabel('Mean Error')
